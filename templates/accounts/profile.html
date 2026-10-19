@@ -1,0 +1,31 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head"><h1>Your profile</h1></header>
+
+<div class="grid two-col">
+  <div class="card">
+    <h2>Account</h2>
+    <dl class="detail-list">
+      <div><dt>Email</dt><dd>{{ user.email }}</dd></div>
+      <div><dt>Role</dt><dd>{% badge user.role %}</dd></div>
+      <div><dt>Status</dt><dd>{{ user.is_active }}</dd></div>
+      <div><dt>Last login</dt><dd>{{ user.last_login|default:"—" }}</dd></div>
+    </dl>
+  </div>
+  <div class="card form-card">
+    <h2>Edit details</h2>
+    {% if form.non_field_errors %}
+    <ul class="field-errors">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% for field in form.visible_fields %}{% form_field field %}{% endfor %}
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

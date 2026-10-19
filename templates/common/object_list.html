@@ -1,0 +1,123 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+  <div class="page-actions">
+    {% if create_url %}
+    <a class="btn btn-primary" href="{{ create_url }}">{% icon "plus" "icon-sm" %} {{ create_label|default:"Add" }}</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="toolbar">
+  {% if filter_form_url %}
+  <form class="filters" method="get" action="{{ filter_form_url }}">
+    <div class="search-box">
+      {% icon "search" "icon-sm" %}
+      <input type="search" name="q" value="{{ active_filters.q|default:'' }}" placeholder="Search…" aria-label="Search">
+    </div>
+    {% if group_choices %}
+    <select name="group" aria-label="Filter by group">
+      {% for value, label in group_choices %}
+      <option value="{{ value }}" {% if value and active_filters.group == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if status_choices %}
+    <select name="status" aria-label="Filter by status">
+      {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if value and active_filters.status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if range_choices %}
+    <select name="range" aria-label="Filter by date range">
+      {% for value, label in range_choices %}
+      <option value="{{ value }}" {% if value and active_filters.range == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if exam_choices %}
+    <select name="exam" aria-label="Filter by exam">
+      <option value="" {% if not active_filters.exam %}selected{% endif %}>All exams</option>
+      {% for exam in exam_choices %}
+      <option value="{{ exam.pk }}" {% if active_filters.exam == exam.pk|stringformat:"s" %}selected{% endif %}>{{ exam }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    <button class="btn" type="submit">Apply</button>
+    {% if active_filters %}<a class="btn btn-ghost" href="{{ filter_form_url }}">Clear</a>{% endif %}
+  </form>
+  <a class="btn btn-ghost" href="{% querystring page='' export='csv' %}">{% icon "download" "icon-sm" %} Export CSV</a>
+  {% endif %}
+</div>
+
+<div class="card table-card">
+  {% if object_list %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr>
+        {% for column in columns %}<th scope="col">{{ column.header }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for object in object_list %}
+      <tr>
+        {% for column in columns %}
+        <td>
+          {% with value=object|lookup:column.path %}
+          {% if column.format == "link" and row_url_name %}
+            <a class="row-link" href="{% url row_url_name object.pk %}">{{ value }}</a>
+          {% elif column.format == "currency" %}
+            {{ value|currency }}
+          {% elif column.format == "date" or column.format == "datetime" %}
+            {{ value|default:"—" }}
+          {% elif column.format == "bool" %}
+            {% if value %}<span class="badge badge-ok">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
+          {% elif column.format == "badge" %}
+            {% if value != "" %}{% badge value %}{% else %}—{% endif %}
+          {% else %}
+            {{ value|default_if_none:"—" }}
+          {% endif %}
+          {% endwith %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>{{ empty_message }}</p>
+    {% if create_url %}<a class="btn btn-primary" href="{{ create_url }}">{% icon "plus" "icon-sm" %} {{ create_label|default:"Add" }}</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="pagination" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+    <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Previous</a>
+    {% endif %}
+    {% paginator_window page_obj as window_pages %}
+    {% for num in window_pages %}
+      {% if num == page_obj.number %}
+      <span class="page-link is-current" aria-current="page">{{ num }}</span>
+      {% else %}
+      <a class="page-link" href="{% querystring page=num %}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next</a>
+    {% endif %}
+  </nav>
+  <p class="count-note">
+    {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+    · page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

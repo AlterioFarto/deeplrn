@@ -1,0 +1,43 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>Record attendance</h1>
+</header>
+
+{% if selection_form.non_field_errors %}
+<ul class="field-errors">{% for error in selection_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+{% endif %}
+
+<div class="card form-card">
+  <form method="get" action="{% url 'attendance:record' %}" class="filters">
+    {% for field in selection_form.visible_fields %}{% form_field field %}{% endfor %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{% icon "check" "icon-sm" %} Load students</button>
+      <a class="btn btn-ghost" href="{{ cancel_url }}">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{% if students %}
+<form method="post">
+  {% csrf_token %}
+  <div class="card">
+    <div class="entry-head">
+      <h2>{{ group }} — {{ on_date }}{% if not whole_day %} · {{ timeslot }}{% else %} · whole day{% endif %}</h2>
+      {% if already_recorded %}<span class="badge badge-warn">Already recorded</span>{% endif %}
+    </div>
+    <p class="muted">Mark every student. Present is preselected.</p>
+    <ul class="entry-list">
+      {% for field in entry_form %}
+      <li class="entry-row">{% form_field field %}</li>
+      {% endfor %}
+    </ul>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{% icon "check" "icon-sm" %} Save attendance</button>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

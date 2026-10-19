@@ -1,0 +1,33 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+  <div class="page-actions">
+    <span class="badge badge-info">{{ entered_count }} / {{ student_count }} entered</span>
+  </div>
+</header>
+
+{% if entry_form.non_field_errors %}
+<ul class="field-errors">{% for error in entry_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+{% endif %}
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <p class="muted">Leave a field blank to skip that student. Existing marks are overwritten.</p>
+  <div class="entry-grid">
+    {% for field in entry_form.visible_fields %}
+    <div class="field">
+      <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<ul class="field-errors"><li>{{ field.errors.0 }}</li></ul>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{% icon "check" "icon-sm" %} Save results</button>
+    <a class="btn btn-ghost" href="{{ cancel_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

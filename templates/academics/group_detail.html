@@ -1,0 +1,81 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+  <div class="page-actions">
+    {% if actions %}
+    <a class="btn" href="{{ actions.edit_url }}">{% icon "edit" "icon-sm" %} Edit</a>
+    <a class="btn btn-danger" href="{{ actions.delete_url }}">{% icon "trash" "icon-sm" %} Delete</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="grid two-col">
+  <div class="card">
+    <h2>Group</h2>
+    <dl class="detail-list">
+      <div><dt>Status</dt><dd>{% if group.is_active %}{% badge "active" %}{% else %}{% badge "inactive" %}{% endif %}</dd></div>
+      <div><dt>Capacity</dt><dd>{{ group.capacity }}</dd></div>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Mentors</h2>
+    {% if mentors %}
+    <ul class="list-plain">
+      {% for assignment in mentors %}
+      <li>{{ assignment.user.get_full_name }} <span class="muted">{{ assignment.user.email }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No mentors assigned.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card table-card">
+  <h2>Students</h2>
+  {% if students %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Student</th><th>Admission no.</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for student in students %}
+      <tr>
+        <td><a href="{% url 'students:student_detail' student.pk %}">{{ student.full_name }}</a></td>
+        <td>{{ student.admission_no }}</td>
+        <td>{% if student.is_active %}{% badge "active" %}{% else %}{% badge "inactive" %}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No students in this group yet.</p></div>
+  {% endif %}
+</div>
+
+<div class="card table-card">
+  <h2>Timetable</h2>
+  {% if schedules %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Day</th><th>Period</th><th>Subject</th><th>Mentor</th></tr></thead>
+    <tbody>
+      {% for entry in schedules %}
+      <tr>
+        <td>{{ entry.get_day_display }}</td>
+        <td>{{ entry.timeslot }}</td>
+        <td>{{ entry.subject.name }}</td>
+        <td>{{ entry.mentor }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No timetable entries yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

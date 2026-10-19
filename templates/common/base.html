@@ -1,0 +1,87 @@
+{% load static ui_tags %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}{% if page_title %}{{ page_title }} · {% endif %}DEEPLRN{% endblock %}</title>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/app.js' %}" nonce="{{ request.csp_nonce }}" defer></script>
+</head>
+<body{% block body_attrs %}{% endblock %}>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="layout" data-layout>
+  <header class="topbar">
+    <button class="btn btn-ghost icon-only nav-toggle" data-nav-toggle aria-expanded="false" aria-label="Toggle navigation">{% icon "menu" %}</button>
+    <a class="brand" href="{% url 'dashboard:home' %}">
+      <span class="brand-mark" aria-hidden="true">DL</span>
+      <span class="brand-name">DEEPLRN</span>
+    </a>
+    <div class="topbar-spacer"></div>
+    <button class="btn btn-ghost icon-only theme-toggle" data-theme-toggle aria-label="Toggle theme">{% icon "moon" %}</button>
+    {% if request.user.is_authenticated %}
+    <div class="user-menu" data-user-menu>
+      <button class="user-chip" data-user-menu-toggle aria-haspopup="true" aria-expanded="false">
+        <span class="avatar" aria-hidden="true">{{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}</span>
+        <span class="user-chip-name">{{ request.user.get_full_name|default:request.user.email }}</span>
+      </button>
+      <div class="user-menu-panel" hidden>
+        <a class="menu-item" href="{% url 'accounts:profile' %}">{% icon "settings" %} Profile</a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button class="menu-item" type="submit">{% icon "logout" %} Log out</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </header>
+
+  {% if request.user.is_authenticated %}
+  <nav class="sidebar" data-sidebar aria-label="Primary">
+    <ul class="nav-list">
+      {% for item in nav_items %}
+      <li>
+        <a class="nav-link{% if item.namespace == request.resolver_match.namespace %} is-active{% endif %}"
+           href="{{ item.url }}" {% if item.namespace == request.resolver_match.namespace %}aria-current="page"{% endif %}>
+          {% icon item.icon %}<span>{{ item.label }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  <main id="main" class="content" tabindex="-1">
+    {% if messages %}
+    <div class="messages" role="status">
+      {% for message in messages %}
+      <div class="message message-{{ message.level_tag }}">
+        {% if message.level_tag == "error" %}{% icon "alert" "icon-sm" %}{% else %}{% icon "check" "icon-sm" %}{% endif %}
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="{% url 'dashboard:home' %}">Home</a></li>
+        {% for label, url in breadcrumbs %}
+        <li>{% if url %}<a href="{{ url }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="site-foot">
+      <span>DEEPLRN — institute management</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

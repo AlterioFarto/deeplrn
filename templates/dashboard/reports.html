@@ -1,0 +1,31 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>Reports</h1>
+</header>
+<p class="muted">Generated digests live outside the web root; each download is logged.</p>
+
+<div class="card table-card">
+  {% if artifacts %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Report</th><th>Generated</th><th>Size</th><th>Download</th></tr></thead>
+    <tbody>
+      {% for artifact in artifacts %}
+      <tr>
+        <td>{{ artifact.display_name }}</td>
+        <td>{{ artifact.created_at }}</td>
+        <td>{{ artifact.size_bytes }} B</td>
+        <td><a class="btn btn-sm" href="{% url 'dashboard:report_download' artifact.pk %}">{% icon "download" "icon-sm" %} CSV</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No reports generated yet. The weekly digest runs every Monday.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

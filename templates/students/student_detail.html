@@ -1,0 +1,122 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+  <div class="page-actions">
+    {% if edit_url %}<a class="btn" href="{{ edit_url }}">{% icon "edit" "icon-sm" %} Edit</a>{% endif %}
+    {% if delete_url %}<a class="btn btn-danger" href="{{ delete_url }}">{% icon "trash" "icon-sm" %} Remove</a>{% endif %}
+  </div>
+</header>
+
+<div class="grid two-col">
+  <div class="card">
+    <h2>Student</h2>
+    <dl class="detail-list">
+      <div><dt>Admission no.</dt><dd>{{ student.admission_no }}</dd></div>
+      <div><dt>Group</dt><dd><a href="{% url 'academics:group_detail' student.group_id %}">{{ student.group }}</a></dd></div>
+      <div><dt>Date of birth</dt><dd>{{ student.dob|default:"—" }}</dd></div>
+      <div><dt>Enrolled on</dt><dd>{{ student.enrollment_date }}</dd></div>
+      <div><dt>Status</dt>
+        <dd>{% if student.is_active %}{% badge "active" %}{% else %}{% badge "inactive" %}{% endif %}</dd>
+      </div>
+      <div><dt>Attendance</dt><dd>
+        {% if attendance_pct is not None %} <strong>{{ attendance_pct }}%</strong>{% else %}No attendance yet{% endif %}
+      </dd></div>
+      <div><dt>Outstanding</dt><dd>{{ outstanding|currency }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="card">
+    <h2>Guardians</h2>
+    {% if linked_guardians %}
+    <ul class="list-plain">
+      {% for link in linked_guardians %}
+      <li class="row-between">
+        <span>
+          <a href="{% url 'students:guardian_update' link.guardian_id %}">{{ link.guardian }}</a>
+          <span class="muted">· {{ link.get_relationship_display }}{% if link.is_primary_contact %} · primary{% endif %}</span>
+        </span>
+        {% if link_url %}
+        <form method="post" action="{% url 'students:guardian_unlink' link.pk %}">
+          {% csrf_token %}<button class="btn btn-sm" type="submit">Unlink</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No guardians linked yet.</p>
+    {% endif %}
+    {% if link_url %}
+    <form method="post" action="{{ link_url }}" class="link-form">
+      {% csrf_token %}
+      {% for field in guardian_link_form.visible_fields %}{% form_field field %}{% endfor %}
+      <button class="btn btn-primary btn-sm" type="submit">{% icon "plus" "icon-sm" %} Link guardian</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid two-col">
+  <div class="card table-card">
+    <h2>Recent attendance</h2>
+    {% if recent_attendance %}
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Period</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for row in recent_attendance %}
+        <tr><td>{{ row.date }}</td><td>{{ row.timeslot|default:"Whole day" }}</td><td>{% badge row.status %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="muted">No attendance records yet.</p>{% endif %}
+  </div>
+
+  <div class="card table-card">
+    <h2>Recent results</h2>
+    {% if recent_results %}
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Exam</th><th>Date</th><th>Marks</th><th>Grade</th></tr></thead>
+      <tbody>
+        {% for row in recent_results %}
+        <tr>
+          <td>{{ row.exam.subject.name }}</td>
+          <td>{{ row.exam.date }}</td>
+          <td>{{ row.marks }} / {{ row.exam.max_marks }}</td>
+          <td>{% badge row.grade %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="muted">No results recorded yet.</p>{% endif %}
+  </div>
+</div>
+
+<div class="card table-card">
+  <h2>Invoices</h2>
+  {% if invoices %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Period</th><th>Amount due</th><th>Outstanding</th><th>Due date</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for invoice in invoices %}
+      <tr>
+        <td><a href="{% url 'billing:invoice_detail' invoice.pk %}">{{ invoice.period_start }} → {{ invoice.period_end }}</a></td>
+        <td>{{ invoice.amount_due|currency }}</td>
+        <td>{{ invoice.outstanding|currency }}</td>
+        <td>{{ invoice.due_date }}</td>
+        <td>{% badge invoice.status %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="muted">No invoices yet.</p>{% endif %}
+</div>
+{% endblock %}

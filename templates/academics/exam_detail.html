@@ -1,0 +1,56 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+  <div class="page-actions">
+    {% if can_edit %}
+    <a class="btn btn-primary" href="{{ entry_url }}">{% icon "edit" "icon-sm" %} Enter results</a>
+    <a class="btn" href="{{ edit_url }}">{% icon "edit" "icon-sm" %} Edit exam</a>
+    <a class="btn btn-danger" href="{{ delete_url }}">{% icon "trash" "icon-sm" %} Delete</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="grid two-col">
+  <div class="card">
+    <h2>Exam</h2>
+    <dl class="detail-list">
+      <div><dt>Subject</dt><dd>{{ exam.subject }}</dd></div>
+      <div><dt>Group</dt><dd><a href="{% url 'academics:group_detail' exam.group_id %}">{{ exam.group }}</a></dd></div>
+      <div><dt>Date</dt><dd>{{ exam.date }}</dd></div>
+      <div><dt>Starts</dt><dd>{{ exam.start_time }}</dd></div>
+      <div><dt>Duration</dt><dd>{{ exam.duration_minutes }} min</dd></div>
+      <div><dt>Max marks</dt><dd>{{ exam.max_marks }}</dd></div>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>Entry progress</h2>
+    <p class="stat-value">{{ entered_count }} / {{ student_count }}</p>
+    <p class="muted">results entered for students in the group.</p>
+  </div>
+</div>
+
+<div class="card table-card">
+  <h2>Results</h2>
+  {% if results %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Student</th><th>Marks</th><th>Grade</th></tr></thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td><a href="{% url 'students:student_detail' result.student_id %}">{{ result.student.full_name }}</a></td>
+        <td>{{ result.marks }} / {{ exam.max_marks }}</td>
+        <td>{% badge result.grade %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No results have been entered for this exam yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

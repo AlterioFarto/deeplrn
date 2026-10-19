@@ -1,0 +1,146 @@
+[project]
+name = "deeplrn"
+version = "1.0.0"
+description = "DEEPLRN - educational institute management system"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Proprietary" }
+
+dependencies = [
+    "Django~=5.2.6",
+    "psycopg[binary]~=3.2.3",
+    "django-environ~=0.12.0",
+    "whitenoise~=6.9.0",
+    "redis~=5.2.0",
+    "celery[redis]~=5.5.0",
+    "gunicorn~=23.0.0",
+    "sentry-sdk~=2.19.0",
+    "django-csp~=4.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest~=8.3.0",
+    "pytest-django~=4.10.0",
+    "pytest-cov~=6.0.0",
+    "factory-boy~=3.3.1",
+    "Faker~=33.0.0",
+    "ruff~=0.9.0",
+    "black~=25.1.0",
+    "mypy~=1.14.0",
+    "django-stubs~=5.2.0",
+    "pre-commit~=4.0.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "DJ",  # flake8-django
+    "S",   # flake8-bandit
+    "SIM", # flake8-simplify
+    "UP",  # pyupgrade
+    "RUF", # ruff-specific
+]
+ignore = [
+    "S101",  # assert is the idiomatic way to test
+    "RUF012", # Django model/view metaclass defaults are intentionally mutable
+    "DJ012",  # ruff's ordering differs from Django's naming guidance for managers
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106", "S107", "S311", "B017"]
+"**/tests.py" = ["S105", "S106", "S107", "S311", "B017"]
+"config/settings/**" = ["S105"]
+"common/templatetags/ui_tags.py" = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = "migrations"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+check_untyped_defs = true
+warn_unused_ignores = false
+warn_redundant_casts = true
+no_implicit_optional = true
+exclude = ["migrations"]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "kombu.*", "redis.*", "environ.*", "whitenoise.*"]
+ignore_missing_imports = true
+
+# django-stubs cannot model dynamic QuerySet annotations or DeletionMixin unions
+[[tool.mypy.overrides]]
+module = [
+    "conftest",
+    "*.tests",
+    "*.views",
+    "*.views.*",
+    "*.forms",
+    "*.factories",
+    "*.selectors",
+    "*.tasks",
+    "*.management.*",
+    "common.mixins",
+    "common.scoping",
+    "common.middleware",
+    "common.models",
+    "accounts.models",
+    "academics.admin",
+]
+disable_error_code = [
+    "attr-defined",
+    "misc",
+    "arg-type",
+    "union-attr",
+    "operator",
+    "override",
+    "assignment",
+    "list-item",
+    "return-value",
+    "var-annotated",
+    "call-overload",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.base"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+testpaths = [
+    "common",
+    "accounts",
+    "academics",
+    "students",
+    "attendance",
+    "results",
+    "billing",
+    "dashboard",
+]
+python_files = ["test_*.py", "tests.py"]
+addopts = ["--strict-markers", "--ds=config.settings.test"]
+filterwarnings = [
+    "error::DeprecationWarning",
+    "ignore::UserWarning:django.core.handlers.base",
+]
+
+[tool.coverage.run]
+source = ["common", "accounts", "academics", "students", "attendance", "results", "billing", "dashboard"]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.uv]
+package = false
+

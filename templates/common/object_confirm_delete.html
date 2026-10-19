@@ -1,0 +1,23 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+</header>
+
+<div class="card confirm-card">
+  <div class="confirm-icon">{% icon "alert" %}</div>
+  <p class="confirm-message">{{ confirm_message|default:"This action cannot be undone." }}</p>
+  {% if form.non_field_errors %}
+  <ul class="field-errors">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">{% icon "trash" "icon-sm" %} Confirm</button>
+      {% if cancel_url %}<a class="btn btn-ghost" href="{{ cancel_url }}">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+# Development stack: PostgreSQL + Redis + web + Celery worker/beat.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: deeplrn
+      POSTGRES_USER: deeplrn
+      POSTGRES_PASSWORD: deeplrn-local
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deeplrn"]
+      interval: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DEEPLRN_DATABASE_URL: postgres://deeplrn:deeplrn-local@db:5432/deeplrn
+      DEEPLRN_REDIS_URL: redis://redis:6379/0
+      DEEPLRN_CELERY_BROKER_URL: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - reports:/app/reports
+
+  worker:
+    build: .
+    command: ["celery", "-A", "config", "worker", "--loglevel", "INFO"]
+    env_file: .env
+    environment:
+      DEEPLRN_DATABASE_URL: postgres://deeplrn:deeplrn-local@db:5432/deeplrn
+      DEEPLRN_REDIS_URL: redis://redis:6379/0
+      DEEPLRN_CELERY_BROKER_URL: redis://redis:6379/1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - reports:/app/reports
+
+  beat:
+    build: .
+    command: ["celery", "-A", "config", "beat", "--loglevel", "INFO"]
+    env_file: .env
+    environment:
+      DEEPLRN_DATABASE_URL: postgres://deeplrn:deeplrn-local@db:5432/deeplrn
+      DEEPLRN_REDIS_URL: redis://redis:6379/0
+      DEEPLRN_CELERY_BROKER_URL: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_started
+    volumes:
+      - reports:/app/reports
+
+volumes:
+  db-data:
+  redis-data:
+  reports:

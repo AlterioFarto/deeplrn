@@ -1,0 +1,72 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+
+{% block content %}
+<header class="page-head">
+  <h1>{{ page_title }}</h1>
+    <div class="page-actions">
+      {% if edit_url %}<a class="btn" href="{{ edit_url }}">{% icon "edit" "icon-sm" %} Edit</a>{% endif %}
+      {% if issue_url %}
+      <form method="post" action="{{ issue_url }}">
+        {% csrf_token %}<button class="btn btn-primary" type="submit">{% icon "check" "icon-sm" %} Issue invoice</button>
+      </form>
+      {% endif %}
+      {% if can_record %}<a class="btn btn-primary" href="{{ payment_url }}">{% icon "plus" "icon-sm" %} Record payment</a>{% endif %}
+      {% if void_url %}
+      <form method="post" action="{{ void_url }}">
+        {% csrf_token %}<button class="btn btn-danger" type="submit">{% icon "x" "icon-sm" %} Void</button>
+      </form>
+      {% endif %}
+    </div>
+</header>
+
+<div class="grid two-col">
+  <div class="card">
+    <h2>Invoice</h2>
+    <dl class="detail-list">
+      <div><dt>Student</dt><dd><a href="{% url 'students:student_detail' invoice.student_id %}">{{ invoice.student }}</a></dd></div>
+      <div><dt>Group</dt><dd>{{ invoice.student.group }}</dd></div>
+      <div><dt>Period</dt><dd>{{ invoice.period_start }} → {{ invoice.period_end }}</dd></div>
+      <div><dt>Amount due</dt><dd>{{ invoice.amount_due|currency }}</dd></div>
+      <div><dt>Due date</dt><dd>{{ invoice.due_date }}</dd></div>
+      <div><dt>Status</dt><dd>{% badge invoice.status %}</dd></div>
+      <div><dt>Outstanding</dt><dd class="strong">{{ outstanding|currency }}</dd></div>
+    </dl>
+  </div>
+</div>
+
+<div class="card table-card">
+  <h2>Payments</h2>
+  {% if payments %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Receipt</th><th>Amount</th><th>Paid on</th><th>Method</th><th>Recorded by</th><th></th></tr></thead>
+    <tbody>
+      {% for payment in payments %}
+      <tr{% if payment.is_deleted %} class="is-struck"{% endif %}>
+        <td>{{ payment.receipt_no|default:"—" }}</td>
+        <td>{{ payment.amount|currency }}</td>
+        <td>{{ payment.paid_on }}</td>
+        <td>{{ payment.method }}</td>
+        <td>{{ payment.recorded_by|default:"—" }}</td>
+        <td>
+          {% if payment.is_deleted and payment.restore_url %}
+          <form method="post" action="{{ payment.restore_url }}">
+            {% csrf_token %}<button class="btn btn-sm" type="submit">Restore</button>
+          </form>
+          {% elif payment.delete_url %}
+          <form method="post" action="{{ payment.delete_url }}">
+            {% csrf_token %}<button class="btn btn-sm" type="submit">Reverse</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No payments recorded for this invoice yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "common/base.html" %}
+{% load ui_tags %}
+{% block content %}
+<div class="dashboard">
+  {% if role.value == "ADMIN" %}
+  <header class="page-head">
+    <h1>Dashboard</h1>
+  </header>
+
+  <div class="stat-grid">
+    <div class="stat-card"><span class="stat-muted">Students</span><span class="stat-value">{{ stats.student_count }}</span></div>
+    <div class="stat-card"><span class="stat-muted">Active groups</span><span class="stat-value">{{ stats.group_count }}</span></div>
+    <div class="stat-card"><span class="stat-muted">Mentors</span><span class="stat-value">{{ stats.mentor_count }}</span></div>
+    <div class="stat-card"><span class="stat-muted">Guardians</span><span class="stat-value">{{ stats.guardian_count }}</span></div>
+    <div class="stat-card">
+      <span class="stat-muted">Outstanding fees</span><span class="stat-value">{{ stats.outstanding_total }}</span>
+      <span class="stat-foot">Collected this month: {{ stats.collected_this_month }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-muted">Marked today</span><span class="stat-value">{{ stats.attendance_today.PRESENT }}</span>
+      <span class="stat-foot">
+        Absent {{ stats.attendance_today.ABSENT }} · Late {{ stats.attendance_today.LATE }} · Excused {{ stats.attendance_today.EXCUSED }}
+      </span>
+    </div>
+  </div>
+
+  <div class="grid two-col">
+    <div class="card">
+      <h2>Attendance concern — below {{ stats.threshold }}%</h2>
+      {% if stats.at_risk %}
+      <table class="data-table">
+        <thead><tr><th>Student</th><th>Group</th><th>Attendance</th></tr></thead>
+        <tbody>
+          {% for row in stats.at_risk %}
+          <tr>
+            <td><a href="{% url 'students:student_detail' row.id %}">{{ row.name }}</a></td>
+            <td>{{ row.group }}</td>
+            <td>{% if row.percent %}{{ row.percent }}%{% else %}No data{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No student is below the threshold. Keep it up.</p>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h2>Upcoming exams</h2>
+      {% if stats.upcoming_exams %}
+      <ul class="list-plain">
+        {% for exam in stats.upcoming_exams %}
+        <li>
+          <span class="strong">{{ exam.subject }}</span>
+          <span class="muted">{{ exam.group }} · {{ exam.date }} {{ exam.start_time }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No exams scheduled.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% elif role.value == "MENTOR" %}
+  <header class="page-head"><h1>My groups</h1></header>
+
+  <div class="stat-grid">
+    <div class="stat-card"><span class="stat-muted">Groups</span><span class="stat-value">{{ stats.group_count }}</span></div>
+    <div class="stat-card"><span class="stat-muted">Students</span><span class="stat-value">{{ stats.student_count }}</span></div>
+    <div class="stat-card">
+      <span class="stat-muted">Marked today</span><span class="stat-value">{{ stats.attendance_today.PRESENT }}</span>
+      <span class="stat-foot">Absent {{ stats.attendance_today.ABSENT }} · Late {{ stats.attendance_today.LATE }}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Group attendance</h2>
+    {% if stats.groups %}
+    <table class="data-table">
+      <thead><tr><th>Group</th><th>Students</th><th>Attendance</th></tr></thead>
+      <tbody>
+        {% for group in stats.groups %}
+        <tr>
+          <td><a href="{% url 'academics:group_detail' group.id %}">{{ group.name }}</a></td>
+          <td>{{ group.student_count }}</td>
+          <td>{% if group.percent %}{{ group.percent }}%{% else %}No data{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">You are not assigned to any group yet.</p>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <header class="page-head"><h1>My students</h1></header>
+
+  <div class="card-group-list">
+    {% for student in stats.students %}
+    <div class="card student-summary">
+      <div class="student-summary-head">
+        <a href="{% url 'students:student_detail' student.id %}" class="strong">{{ student.name }}</a>
+        <span class="muted">{{ student.group }}</span>
+      </div>
+      <div class="student-summary-body">
+        <span>Attendance: <strong>{% if student.percent %}{{ student.percent }}%{% else %}No data{% endif %}</strong></span>
+        <span>Outstanding: <strong>{{ student.outstanding }}</strong></span>
+      </div>
+    </div>
+    {% empty %}
+    <p class="muted">No students are linked to your account yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Attendance today</h2>
+    <span class="stat-value">{{ stats.attendance_today.PRESENT }} marked present</span>
+    <span class="stat-foot">Absent {{ stats.attendance_today.ABSENT }} · Late {{ stats.attendance_today.LATE }} · Excused {{ stats.attendance_today.EXCUSED }}</span>
+  </div>
+  {% endif %}
+
+  {% if stats.upcoming_exams and role.value != "ADMIN" %}
+  <div class="card">
+    <h2>Upcoming exams</h2>
+    <ul class="list-plain">
+      {% for exam in stats.upcoming_exams %}
+      <li><span class="strong">{{ exam.subject }}</span> <span class="muted">{{ exam.group }} · {{ exam.date }} {{ exam.start_time }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Attendance trend</h2>
+    <div class="trend" data-trend-chart aria-label="Attendance trend, last two weeks"></div>
+    {% if not stats.trend %}<p class="muted">No attendance recorded in the last two weeks.</p>{% endif %}
+  </div>
+</div>
+
+{% json_data trend_json "trend-data" %}
+{% endblock %}
